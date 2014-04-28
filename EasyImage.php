@@ -67,7 +67,7 @@ class EasyImage extends CApplicationComponent
      */
     public function __construct($file = null, $driver = null)
     {
-        if ($file) {
+        if (is_file($file)) {
             return $this->_image = Image::factory($this->detectPath($file), $driver ? $driver : $this->driver);
         }
     }
@@ -140,6 +140,9 @@ class EasyImage extends CApplicationComponent
         if ($file instanceof Image) {
             $this->_image = $file;
         } else {
+            if (!is_file($file)) {
+                return false;
+            }
             $this->_image = Image::factory($this->detectPath($file), $this->driver);
         }
         foreach ($params as $key => $value) {
@@ -266,6 +269,9 @@ class EasyImage extends CApplicationComponent
         }
 
         // Create and caching thumbnail use params
+        if(!is_file($file)) {
+            return false;
+        }
         $image = Image::factory($this->detectPath($file), $this->driver);
         $originWidth = $image->width;
         $originHeight = $image->height;
