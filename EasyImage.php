@@ -67,8 +67,8 @@ class EasyImage extends CApplicationComponent
      */
     public function __construct($file = null, $driver = null)
     {
-        if (is_file($file)) {
-            return $this->_image = Image::factory($this->detectPath($file), $driver ? $driver : $this->driver);
+        if ($file = $this->detectPath($file)) {
+            return $this->_image = Image::factory($file, $driver ? $driver : $this->driver);
         }
     }
 
@@ -120,11 +120,14 @@ class EasyImage extends CApplicationComponent
      */
     public function detectPath($file)
     {
-        $fullPath = dirname(Yii::app()->basePath) . $file;
+        $fullPath = Yii::getpathOfAlias('webroot') . $file;
         if (is_file($fullPath)) {
             return $fullPath;
         }
-        return $file;
+        elseif (is_file($file)) {
+            return $file;
+        }
+        return false;
     }
 
     /**
@@ -140,10 +143,10 @@ class EasyImage extends CApplicationComponent
         if ($file instanceof Image) {
             $this->_image = $file;
         } else {
-            if (!is_file($file)) {
+            if (!$file = $this->detectPath($file)) {
                 return false;
             }
-            $this->_image = Image::factory($this->detectPath($file), $this->driver);
+            $this->_image = Image::factory($file, $this->driver);
         }
         foreach ($params as $key => $value) {
             switch ($key) {
@@ -250,6 +253,9 @@ class EasyImage extends CApplicationComponent
      */
     public function thumbSrcOf($file, $params = array())
     {
+        if (!$file = $this->detectPath($file)) {
+            return false;
+        }
         // Paths
         $hash = md5($file . serialize($params));
         $cachePath = Yii::getpathOfAlias('webroot') . $this->cachePath . $hash{0};
@@ -269,10 +275,7 @@ class EasyImage extends CApplicationComponent
         }
 
         // Create and caching thumbnail use params
-        if(!is_file($file)) {
-            return false;
-        }
-        $image = Image::factory($this->detectPath($file), $this->driver);
+        $image = Image::factory($file, $this->driver);
         $originWidth = $image->width;
         $originHeight = $image->height;
         $result = $this->_doThumbOf($image, $cacheFile, $params);
